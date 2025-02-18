@@ -1,0 +1,77 @@
+;
+; ChainedDriver.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System ; TODO: specify appropriate Class
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Provider=%ManufacturerName%
+CatalogFile=ChainedDriver.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+ChainedDriver_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+ChainedDriver.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%ChainedDriver.DeviceDesc%=ChainedDriver_Device, Root\ChainedDriver ; TODO: edit hw-id
+
+[ChainedDriver_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+ChainedDriver.sys
+
+;-------------- Service installation
+[ChainedDriver_Device.NT.Services]
+AddService = ChainedDriver,%SPSVCINST_ASSOCSERVICE%, ChainedDriver_Service_Inst
+
+; -------------- ChainedDriver driver install sections
+[ChainedDriver_Service_Inst]
+DisplayName    = %ChainedDriver.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\ChainedDriver.sys
+
+;
+;--- ChainedDriver_Device Coinstaller installation ------
+;
+
+[ChainedDriver_Device.NT.CoInstallers]
+AddReg=ChainedDriver_Device_CoInstaller_AddReg
+CopyFiles=ChainedDriver_Device_CoInstaller_CopyFiles
+
+[ChainedDriver_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[ChainedDriver_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[ChainedDriver_Device.NT.Wdf]
+KmdfService =  ChainedDriver, ChainedDriver_wdfsect
+[ChainedDriver_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+DiskName = "ChainedDriver Installation Disk"
+ChainedDriver.DeviceDesc = "ChainedDriver Device"
+ChainedDriver.SVCDESC = "ChainedDriver Service"
